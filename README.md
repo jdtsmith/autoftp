@@ -1,6 +1,6 @@
 # autoftp
 
-Watch for changes in files with matching names in the current directory and all subdirectories.  For any matching files which are created or modified files, quickly send them by FTP to a remote server.
+Watch for changes in files with matching names in the current directory and all subdirectories.  For any matching files which get created or modified, quickly send them by FTP to a remote server.
 
 ## Quick Start
 
@@ -37,16 +37,16 @@ Micro-controller development can be tedious.  With C-based firmware frameworks, 
 1. Wait for microcontroller to reboot and re-run firmware
 1. Test your changes
 
-An edit/compile/build/upload test cycle over one minute is not atypical. 
+An edit/compile/build/upload "development loop" cycle over one minute is not atypical. Painful!
 
-[Micropython](http://micropython.org) greatly simplifies this workflow.  It includes an interactive REPL for testing and development.  But for typical projects, you'll be editing relatively large Python files (>5K), in which case the development loop can _still_ be a somewhat slow process:
+[Micropython](http://micropython.org) greatly simplifies this workflow.  It includes an interactive REPL for testing and development. It's _paste mode_ (`Ctrl-E`) makes testing small chunks of code trivial.  But for typical projects, you'll be editing and uploading relatively large Python files (>5K).  In this case, the development loop can _still_ be a somewhat slow process:
 
 1. Make a tiny change, perhaps to a single constant in some file
-1. Using a tool like [rshell](https://github.com/dhylands/rshell), `C-x` to exit REPL, use `cp file.py /board` to upload file over serial port [~15s for a 25K file]
-1. Wait for microcontroller to reboot, and reinitialize (perhaps by hand) [1-5s, e.g. for Wifi startup]
+1. Using a tool like [rshell](https://github.com/dhylands/rshell): `C-x` to exit the REPL, `cp file.py /board` to upload file over serial port [~15-20s for a 25K file at the default baud rate]
+1. Wait for microcontroller to reboot (which the rshell `cp` causes), and then reinitialize (perhaps by hand) [1-5s, e.g. for Wifi startup]
 1. Test your changes
 
-This can still result in a 10-30s development loop time.  `autoftp` enables a much faster workflow for network-connected microcontrollers:
+So this still looks like a 10-30s "development loop" time.  `autoftp` enables a much faster workflow for network-connected microcontrollers:
 
 1. Make a tiny change, perhaps to a single constant
 1. File changes are noticed and immediately uploaded to micro-controller [0.5s for small file, <1s for files <25K]
@@ -59,6 +59,10 @@ This can still result in a 10-30s development loop time.  `autoftp` enables a mu
 1. **Won't this wear out the flash?** Unlikely.  Flash usually is written with _wear-leveling_ to spread the writes around, and can support ~100,000 writes without error.  If you edit and re-upload a 5K file (about 150 lines of Python) every 10 seconds 10hrs/day, this works out to 1.3 million writes per year, or just over 1600 full re-writes of a typical (ESP32) 4MB of flash.  At this rate, it would take **62 years** to surpass the 100,000 write limit: a pretty good safety margin.  Another perspective: it may take a fixed number of code/upload/check cycles to bring a project into stability; `autoftp` just accelerates that process. 
 
 ## Tips
+
+## Installing uftpd
+
+[`uftpd.py`](https://github.com/robert-hh/FTP-Server-for-ESP8266-ESP32-and-PYBD) is a small uftpd server which runs in the background waiting for socket connections.  To install, just drop the `uftpd.py` file on your microcontroller (perhaps in the `lib/` subdirectory). 
 
 ### Starting WiFi and `uftpd`
 
