@@ -140,5 +140,5 @@ if __name__ == "__main__":
             if observer:
                 observer.stop()
                 observer.join()
-        except NameError:
+        except (NameError, ConnectionError):
             pass
