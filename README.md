@@ -1,6 +1,6 @@
-# autoftp
+# autoftp — Fast remote development over FTP
 
-Auto-send matching files over the network with FTP.  Ideal for network-connected microcontroller development.  Watches for changes in files with matching names in the current directory and all subdirectories, quickly sending them by FTP to a remote server.
+Auto-send matching files over the network with FTP.  Watches for changes in files with matching names in the current directory and all subdirectories, quickly sending them by FTP to a remote server.  While this works with any files and remote FTP server, it is ideal for network-connected microcontroller development.
 
 Click to see `autoftp` in action:
 <div align="left">
@@ -18,7 +18,9 @@ Click to see `autoftp` in action:
 
 Install the [`uftpd.py`](https://github.com/robert-hh/FTP-Server-for-ESP8266-ESP32-and-PYBD) micro-FTP server on your micro-controller, and set it up to run on your controller (see below for tips).
 
-`autoftp` will start monitoring for changes in any `.py` files in the local directory or below, sending the files via an actively maintained FTP session to `host` whenever they are created or modified, and creating sub-directories as needed. 
+Install the [`autoftp`](https://raw.githubusercontent.com/jdtsmith/autoftp/master/autoftp.py) file and run it like you normally run your Python3 scripts. 
+
+To use, just run in a directory like `autoftp host`.  `autoftp` will start monitoring for changes in any `.py` files (by default) in the local directory or below, sending the files via an actively maintained FTP session to `host` whenever they are created or modified, creating any sub-directories as needed. 
 
 ## Usage
 
@@ -53,10 +55,10 @@ An edit/compile/build/upload "development loop" cycle over one minute is not aty
 1. Wait for microcontroller to reboot (which the rshell `cp` causes), and then reinitialize (perhaps by hand) [1-5s, e.g. for Wifi startup]
 1. Test your changes
 
-So this still looks like a 10-30s "development loop" time.  `autoftp` enables a much faster workflow for network-connected microcontrollers:
+So this still looks like a 10-30s "development loop" time.  `autoftp` enables a _much faster_ workflow for network-connected microcontrollers:
 
 1. Make a tiny change, perhaps to a single constant
-1. File changes are noticed and immediately uploaded to micro-controller [0.5s for small file, <1s for files <25K]
+1. File changes are noticed and automatically and immediately uploaded to the micro-controller [0.5s for small file, <1s for files <25K]
 1. Reload code and test
 
 ## Questions
@@ -64,6 +66,8 @@ So this still looks like a 10-30s "development loop" time.  `autoftp` enables a 
 1. **Where does `autoftp` put the files?** FTP servers have a _current working directory_ (mentioned at `autoftp` startup). For a typical installation this will be `/`, the root of your micro-controller's flash.  Files in the directory where `autoftp` is run from go into the current working directory; files in subdirectories go into matching subdirectories (which are created if necessary). 
 
 1. **Won't this wear out the flash?** Unlikely.  Flash usually is written with _wear-leveling_ to spread the writes around, and can support ~100,000 writes without error.  If you edit and re-upload a 5K file (about 150 lines of Python) every 10 seconds 10hrs/day, this works out to 1.3 million writes per year, or just over 1600 full re-writes of a typical (ESP32) 4MB of flash.  At this rate, it would take **62 years** to surpass the 100,000 write limit: a pretty good safety margin.  Another perspective: it may take a fixed number of code/upload/check cycles to bring a project into stability; `autoftp` just accelerates that process. 
+
+1. **Why not just use an FTP client?** In fact I used to use `ncftpput`, which can automatically find changed files and upload them.  But it adds 1-2s minimum extra overhead as it re-negotiates the FTP connection each time.  `autoftp` takes that friction entirely away. 
 
 ## Tips
 
