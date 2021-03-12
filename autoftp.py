@@ -29,7 +29,7 @@ class FTPWatcher(PatternMatchingEventHandler):
     def ftp_start(self):
         if hasattr(self,'ftp'):
             self.ftp.close()
-            log(prefix = "Re-connecting FTP\n")
+            log(prefix = "== Reconnecting FTP\n")
         try:
             self.ftp = ftplib.FTP(self.host)
         except OSError as e:
