@@ -128,7 +128,8 @@ if __name__ == "__main__":
         observer.schedule(ftp_handler, '.', recursive=True)
         observer.start()
         while observer.is_alive():
-            observer.join(10)
+            observer.join(40)
+            if not ftp_handler.is_ok(): ftp_handler.ftp_start()
     except (KeyboardInterrupt, SystemExit):
         pass
     finally:
