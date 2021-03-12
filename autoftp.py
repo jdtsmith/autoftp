@@ -37,7 +37,8 @@ class FTPWatcher(PatternMatchingEventHandler):
             exit();
         self.ftp.login()
         if self.is_ok():
-            log(prefix = "== FTP server connected: ", msg = self.host)
+            pwd = self.ftp.pwd()
+            log(prefix = "== FTP server connected: ", msg = f"{self.host} (pwd: {pwd})")
         else:
             raise ConnectionError
         if self.debug:
