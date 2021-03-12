@@ -2,6 +2,13 @@
 
 Watch for changes in files with matching names in the current directory and all subdirectories.  For any matching files which get created or modified, quickly send them by FTP to a remote server.
 
+Click to see `autoftp` in action:
+<div align="left">
+      <a href="https://www.youtube.com/watch?v=FaDdorOd11E">
+         <img src="https://img.youtube.com/vi/FaDdorOd11E/0.jpg" style="width:100%">
+      </a>
+</div>
+
 ## Quick Start
 
 ```
