@@ -54,7 +54,9 @@ This can still result in a 10-30s development loop time.  `autoftp` enables a mu
 
 ## Questions
 
-1. **Where does `autoftp` put files?** FTP servers have a common 
+1. **Where does `autoftp` put the files?** FTP servers have a _current working directory_ (mentioned at `autoftp` startup). For a typical installation this will be `/`, the root of your micro-controller's flash.  Files in the directory where `autoftp` is run from go into the current working directory; files in subdirectories go into matching subdirectories (which are created if necessary). 
+
+1. **Won't this wear out the flash?** Unlikely.  Flash usually is written with _wear-leveling_ to spread the writes around, and can support ~100,000 writes without error.  If you edit and re-upload a 5K file (about 150 lines of Python) every 10 seconds 10hrs/day, this works out to 1.3 million writes per year, or just over 1600 full re-writes of a typical (ESP32) 4MB of flash.  At this rate, it would take **62 years** to surpass the 100,000 write limit: a pretty good safety margin.  Another perspective: it may take a fixed number of code/upload/check cycles to bring a project into stability; `autoftp` just accelerates that process. 
 
 ## Tips
 
