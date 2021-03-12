@@ -1,6 +1,6 @@
 # autoftp
 
-Watch for changes in files with matching names in the current directory and all subdirectories.  For any matching files which get created or modified, quickly send them by FTP to a remote server.
+Auto-send matching files over the network with FTP.  Ideal for network-connected microcontroller development.  Watches for changes in files with matching names in the current directory and all subdirectories, quickly sending them by FTP to a remote server.
 
 Click to see `autoftp` in action:
 <div align="left">
