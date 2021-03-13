@@ -51,7 +51,17 @@ class FTPWatcher(PatternMatchingEventHandler):
             return False
         finally:
             return True
-    
+
+    def mkdirs(self, subdir):
+        cur = ''
+        for dr in subdir.split(os.sep):
+            if dr == '.': continue
+            cur = os.path.join(cur,dr)
+            try:
+                self.ftp.voidcmd("SIZE " + cur)
+            except:
+                self.ftp.mkd(cur)
+
     def on_created(self, event):
         self.handle(event)
 
@@ -67,7 +77,7 @@ class FTPWatcher(PatternMatchingEventHandler):
             try:
                 if subdir is not None:
                     if not self.is_ok(): raise ConnectionError
-                    self.ftp.mkd(subdir)
+                    self.mkdirs(subdir)
                     log("success: ", end = '')
                 with open(path,"rb") as f:
                     self.ftp.storbinary("STOR " + path, f)
@@ -84,7 +94,7 @@ class FTPWatcher(PatternMatchingEventHandler):
                     return
                 if e.args[0].startswith('550'):
                     subdir = os.path.dirname(path)
-                    if subdir:
+                    if subdir != '.':
                         log(f"failed\n>> attempting remote directory creation: {subdir}...",
                             error = True, flush = True, end = '')
                         continue
