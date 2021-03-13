@@ -72,8 +72,9 @@ class FTPWatcher(PatternMatchingEventHandler):
         path=event.src_path
         log(prefix=f">> Processing {_BRI}{path}{_RST}...")
         subdir = None
+        tries = 0
         t0 = time.perf_counter()
-        while True:
+        while tries<5:
             try:
                 if subdir is not None:
                     if not self.is_ok(): raise ConnectionError
@@ -84,9 +85,8 @@ class FTPWatcher(PatternMatchingEventHandler):
                 log(f"transferred in {_BRI}{time.perf_counter()-t0:.2}s{_RST}")
                 break
             except (ConnectionError, TimeoutError, EOFError):
-                log("\nFTP connection problem, attempting restart",error = True)
+                log("\nFTP connection problem, attempting restart", error = True)
                 self.ftp_start()
-                return
             except ftplib.error_perm as e:
                 if subdir is not None: # already tried subdir creation 
                     log(f"Failed to transfer file {path}, aborting\n\t{repr(e)}",
@@ -100,6 +100,9 @@ class FTPWatcher(PatternMatchingEventHandler):
                         continue
                 log("\nUnhandled FTP error: " + repr(e), error = True)
                 return
+            tries += 1
+        if tries == 5:
+            log("FTP re-connect failed, aborting", error = True)
 
 if __name__ == "__main__":
     debug = None
@@ -139,14 +142,15 @@ if __name__ == "__main__":
         observer.schedule(ftp_handler, '.', recursive=True)
         observer.start()
         while observer.is_alive():
-            observer.join(40)
+            observer.join(30)
             if not ftp_handler.is_ok(): ftp_handler.ftp_start()
     except (KeyboardInterrupt, SystemExit):
         pass
     finally:
         log(prefix = " Quitting AutoFTP...\n")
         try:
-            if ftp_handler: ftp_handler.ftp.quit()
+            if ftp_handler and ftp_handler.ftp:
+                ftp_handler.ftp.quit()
             if observer:
                 observer.stop()
                 observer.join()
