@@ -70,7 +70,9 @@ class FTPWatcher(PatternMatchingEventHandler):
         
     def handle(self,event):
         path=event.src_path
-        log(prefix=f">> Processing {_BRI}{path}{_RST}...")
+        l = time.localtime()
+        
+        log(prefix=f">> {_BRI}{l.tm_hour:>2}:{l.tm_min:02}{_RST} Processing {_BRI}{path}{_RST}...")
         subdir = None
         tries = 0
         t0 = time.perf_counter()
