@@ -8,6 +8,9 @@ import ftplib
 from getopt import gnu_getopt as getopt
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
+from pathlib import Path
+import subprocess
+
 import colorama
 colorama.init()
 _BRI=colorama.Style.BRIGHT
@@ -22,8 +25,12 @@ def log(msg = None,error = False, prefix = None, **kwds):
         print(col + msg + colorama.Style.RESET_ALL,file=file, **kwds)
 
 class FTPWatcher(PatternMatchingEventHandler):
-    def __init__(self, host, debug = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, host, debug = None,
+                 process_patterns = [], patterns = [],  **kwargs):
+        self.process_patterns = process_patterns
+        if process_patterns:
+            patterns.extend([x['pattern'] for x in process_patterns])
+        super().__init__(patterns = patterns, **kwargs)
         self.host = host
         self.debug = debug
         self.ftp_start()
@@ -64,20 +71,37 @@ class FTPWatcher(PatternMatchingEventHandler):
             except:
                 self.ftp.mkd(cur)
 
+    def on_moved(self, event):
+        self.handle(event.dest_path)
+        
     def on_created(self, event):
-        self.handle(event)
+        self.handle(event.src_path)
 
     def on_modified(self,event):
-        self.handle(event)
+        self.handle(event.src_path)
         
-    def handle(self,event):
-        path=event.src_path
+    def handle(self,path):
         l = time.localtime()
-        
         log(prefix=f">> {_BRI}{l.tm_hour:>2}:{l.tm_min:02}{_RST} Processing {_BRI}{path}{_RST}...")
+
+        t0 = time.perf_counter()
+        if self.process_patterns:
+            ppath = Path(path)
+            try:
+                match = next(x for x in self.process_patterns if ppath.match(x['pattern']))
+            except StopIteration:
+                pass
+            else:
+                try:
+                    subprocess.run((match['script'], path), check = True)
+                except (FileNotFoundError, subprocess.CalledProcessError) as e:
+                    log(f"script {match['script']} encountered error:\n" + repr(e), error = True)
+                else:
+                    log(f"ran script {match['script']} in {_BRI}{time.perf_counter()-t0:.2}s{_RST}")
+                return
+
         subdir = None
         tries = 0
-        t0 = time.perf_counter()
         while tries<5:
             try:
                 if subdir is not None:
@@ -108,25 +132,36 @@ class FTPWatcher(PatternMatchingEventHandler):
         if tries == 5:
             log("FTP re-connect failed, aborting", error = True)
 
+
+usage = '''
+Usage: autoftp ftphost -d --include=|-p 'a,b' --exclude=|-x 'c,d' --process=|-s 'e,f'
+     ftphost: FTP host to connect to
+      -d: Enable debugging output\n" + 
+      -p|--include='pat,pat': include patterns of files to match (default: '*.py')
+      -x|--exclude='pat,pat': filepath patterns to ignore (e.g. '*lib/*,secret*.py')
+      -s|--process='pat,script': instead of uploading, run `script' on files matching `pat'"
+'''
+            
 if __name__ == "__main__":
     debug = None
-    opts,args = getopt(sys.argv[1:],"p:x:d",["include=",'exclude='])
+    opts,args = getopt(sys.argv[1:],"p:x:s:d",["include=","exclude=","process="])
     if len(args) < 1:
-        log("Usage: autoftp ftphost -d --include=|-p 'a,b' --exclude=|-x 'c,d'", error = True)
-        log(" ftphost: FTP host to connect to\n"+
-            " -d: Enable debugging\n" + 
-            " -p|--include='a,b': include patterns of files to match (default: '*.py')\n"+
-            " -x|--exclude='c,d': filepath patterns to ignore (e.g. '*lib/*,secret*.py')",
-            error = True)
+        log(usage, error = True)
         exit()
     host = args[0]
     pats = ["*.py"]
-    expats = None
+    expats, procpats = [], []
     for opt,arg in opts:
-        if opt in ("--include","-p"):
+        if opt in   ("--include","-p"):
             pats = [x.strip() for x in arg.split(",")]
         elif opt in ("--exclude","-x"):
-            expats = [x.strip() for x in arg.split(",")]
+            expats.extend([x.strip() for x in arg.split(",")])
+        elif opt in ("--process","-s"):
+            pp = [x.strip() for x in arg.split(",")]
+            if len(pp) != 2:
+                log("Error in process option: \n" + usage,error = True)
+                exit()
+            procpats.append(dict(zip(("pattern","script"),pp)))
         elif opt == "-d":
             debug = 2
 
@@ -135,12 +170,14 @@ if __name__ == "__main__":
     log(prefix = welcome + "\n\n") 
     log(prefix = '== Monitoring files matching: ', msg = "|".join(pats))
     if expats: log(prefix='==  Excluding files matching: ', msg = "|".join(expats))
+    if procpats: log(prefix='== Processing files matching: ',
+                     msg = "|".join([x['pattern']+':'+x['script'] for x in procpats]))
     log(prefix = "\n")
     
     try:
         ftp_handler = FTPWatcher(host,
                                  patterns = pats, ignore_patterns = expats,
-                                 ignore_directories = True,
+                                 process_patterns = procpats, ignore_directories = True,
                                  case_sensitive = True, debug = debug)
         observer = Observer()
         observer.schedule(ftp_handler, '.', recursive=True)
