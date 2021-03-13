@@ -135,11 +135,11 @@ class FTPWatcher(PatternMatchingEventHandler):
 
 usage = '''
 Usage: autoftp ftphost -d --include=|-p 'a,b' --exclude=|-x 'c,d' --process=|-s 'e,f'
-     ftphost: FTP host to connect to
-      -d: Enable debugging output\n" + 
-      -p|--include='pat,pat': include patterns of files to match (default: '*.py')
-      -x|--exclude='pat,pat': filepath patterns to ignore (e.g. '*lib/*,secret*.py')
-      -s|--process='pat,script': instead of uploading, run `script' on files matching `pat'"
+  ftphost: FTP host to connect to
+  -d: Enable debugging output
+  -p|--include='pat,pat': include patterns of files to match (default: '*.py')
+  -x|--exclude='pat,pat': filepath patterns to ignore (e.g. '*lib/*,secret*.py')
+  -s|--process='pat,script': instead of uploading, run `script' on files matching `pat'
 '''
             
 if __name__ == "__main__":
@@ -159,13 +159,13 @@ if __name__ == "__main__":
         elif opt in ("--process","-s"):
             pp = [x.strip() for x in arg.split(",")]
             if len(pp) != 2:
-                log("Error in process option: \n" + usage,error = True)
+                log("Error in process option: " + usage,error = True)
                 exit()
             procpats.append(dict(zip(("pattern","script"),pp)))
         elif opt == "-d":
             debug = 2
 
-    welcome = "AutoFTP v0.1"
+    welcome = "AutoFTP v0.11"
     if debug: welcome += " (debugging enabled)"
     log(prefix = welcome + "\n\n") 
     log(prefix = '== Monitoring files matching: ', msg = "|".join(pats))
