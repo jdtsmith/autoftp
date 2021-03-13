@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
-import ftplib
+# autoftp: auto-send changed files matching a pattern
+# 2021, J.D. Smith
+import os
 import sys
 import time
+import ftplib
+from getopt import gnu_getopt as getopt
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
-import os
 import colorama
 colorama.init()
 _BRI=colorama.Style.BRIGHT
 _RST=colorama.Style.RESET_ALL
-from getopt import gnu_getopt as getopt
 
 def log(msg = None,error = False, prefix = None, **kwds):
     file = sys.stderr if error else None
