@@ -1,6 +1,6 @@
 # autoftp — Fast remote development over FTP
 
-Auto-send matching files over the network with FTP.  Watches for changes in files with matching names in the current directory and all subdirectories, quickly sending them by FTP to a remote server.  While this works with any files and remote FTP server, it is ideal for network-connected microcontroller development.
+Auto-send matching files over the network with FTP.  Watches for changes in files with matching names in the current directory and all subdirectories, quickly sending them by FTP to a remote server.  While this works with any files and remote FTP server, it is ideal for network-connected microcontroller development.  Matching files can optionally be pre-processed with a script.
 
 Click to see `autoftp` in action:
 <div align="left">
@@ -73,7 +73,7 @@ If you need to pre-process one file type to produce another, you can use, e.g., 
 
 which would auto-compile `.py` files into `.mpy` files and upload them.
 
-N.B. If the files to process are _also_ being uploaded to the host, ensure your processing script does _not_ update the processed file itself, or endless loops will commence.
+N.B. If the files to process are _also_ being uploaded to the host, ensure your processing script does _not_ update the processed file itself, or endless loops will commence.  Script processing occurs before upload.
 
 ## Questions
 
