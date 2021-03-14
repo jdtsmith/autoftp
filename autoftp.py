@@ -49,7 +49,7 @@ class FTPWatcher(PatternMatchingEventHandler):
         self.ftp_start()
 
     def ftp_start(self):
-        if hasattr(self,'ftp'):
+        if hasattr(self,'ftp') and self.ftp:
             self.ftp.close()
             log(prefix = "== Reconnecting FTP\n")
         try:
@@ -69,9 +69,9 @@ class FTPWatcher(PatternMatchingEventHandler):
     def is_ok(self):
         try:
             self.ftp.voidcmd("NOOP")
-        except (ftplib.error_reply, TimeoutError):
+        except (ftplib.error_reply, TimeoutError, EOFError):
             return False
-        finally:
+        else:
             return True
 
     def mkdirs(self, subdir):
@@ -209,7 +209,8 @@ if __name__ == "__main__":
         observer.start()
         while observer.is_alive():
             observer.join(30)
-            if not ftp_handler.is_ok(): ftp_handler.ftp_start()
+            if not ftp_handler.is_ok():
+                ftp_handler.ftp_start()
     except (KeyboardInterrupt, SystemExit):
         pass
     finally:
