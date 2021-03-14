@@ -26,7 +26,9 @@ def log(msg = None,error = False, prefix = None, **kwds):
 
 class FTPWatcher(PatternMatchingEventHandler):
     def __init__(self, host, debug = None,
-                 process_patterns = [], patterns = [],  **kwargs):
+                 process_patterns = None,
+                 patterns = None,  **kwargs):
+        patterns = patterns or []
         if process_patterns:
             patterns.extend(x['pattern'] for x in process_patterns)
         super().__init__(patterns = patterns, **kwargs)
