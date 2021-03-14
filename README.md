@@ -1,6 +1,6 @@
 # autoftp — Fast remote development over FTP
 
-Auto-send matching files over the network with FTP.  Watches for changes in files with matching names in the current directory and all subdirectories, quickly sending them by FTP to a remote server.  While this works with any files and remote FTP server, it is ideal for network-connected microcontroller development.  Matching files can optionally be pre-processed with a script.
+Auto-send matching files over the network with FTP.  Watches for changes in files with matching names in the current directory and all subdirectories, quickly sending them by FTP to a remote server.  While this works with any files and remote FTP server, it is ideal for network-connected microcontroller development.  Matching files can optionally be processed with a script.
 
 Click to see `autoftp` in action:
 <div align="left">
