@@ -27,10 +27,11 @@ def log(msg = None,error = False, prefix = None, **kwds):
 class FTPWatcher(PatternMatchingEventHandler):
     def __init__(self, host, debug = None,
                  process_patterns = [], patterns = [],  **kwargs):
-        self.process_patterns = process_patterns
         if process_patterns:
-            patterns.extend([x['pattern'] for x in process_patterns])
+            patterns.extend(x['pattern'] for x in process_patterns)
         super().__init__(patterns = patterns, **kwargs)
+        self.process_patterns = process_patterns
+
         self.host = host
         self.debug = debug
         self.ftp_start()
@@ -72,7 +73,13 @@ class FTPWatcher(PatternMatchingEventHandler):
                 self.ftp.mkd(cur)
 
     def on_moved(self, event):
-        self.handle(event.dest_path)
+        try:
+            ppath = Path(event.dest_path) # *destination* must match
+            next(x for x in self.patterns if ppath.match(x['pattern']))
+        except StopIteration:
+            return
+        else:
+            self.handle(event.dest_path)
         
     def on_created(self, event):
         self.handle(event.src_path)
