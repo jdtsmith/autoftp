@@ -99,7 +99,7 @@ N.B. If the files being created or modified by a `-s` script are _also_ being up
 
 ## Avoiding soft reset
 
-A simple way of "starting from scratch" is to soft-reset your MicroPython board with `Ctrl-D`.  This has the nice property of re-starting MicroPython with a clean slate without a full hardware boot.  But it also kills off your FTP server, etc.  A better way is to `re-run` your file after uploading it, for example using a simple script (defined in your `main.py`, for example), like:
+A simple way of "starting from scratch" is to soft-reset your MicroPython board with `Ctrl-D`.  This has the nice property of re-starting MicroPython with a clean slate without a full hardware boot.  But it also kills off your FTP server, etc.  While `autoftp` will re-connect, a better way is to `re-run` your file after uploading it, for example using a simple script (defined in your `main.py`, for example), like:
 
 ```python
 def unload(mod): 
