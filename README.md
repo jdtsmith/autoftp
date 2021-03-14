@@ -38,35 +38,40 @@ Usage: autoftp ftphost -d --include=|-p --exclude=|-x --process=|-s --updelete|-
 
 ## Micropython Application
 
-Micro-controller development can be tedious.  With C-based firmware frameworks, you must:
+Micro-controller development can be tedious.  With C-based firmware frameworks, a typical cycle is like:
 
 1. Make a tiny change, perhaps to a single constant in some file
 1. Recompile, sometimes many dozens of files [1-30s]
 1. Relink the firmware [1-10s]
-1. Upload the firmware over Serial [>10s]
-1. Wait for microcontroller to reboot and re-run firmware
+1. Upload the full multi-MB firmware over Serial [>10s]
+1. Wait for the microcontroller to reboot and re-run firmware
 1. Test your changes
+1. Realize your change wasn't correct; back to step 1...
 
-An edit/compile/build/upload "development loop" cycle well over one minute is not atypical. I'd often forget what it was I was testing before an iteration completes.  Painful!
+An edit/compile/build/upload "development loop" cycle well over one minute is not atypical. When using such methods, I often _forget what it was I was testing_ before an iteration completes.  Painful!
 
-[Micropython](http://micropython.org) greatly simplifies this workflow.  It includes an interactive REPL for testing and development. It's _paste mode_ (`Ctrl-E`) makes it trivial to test small chunks of code.  But for typical projects, you'll often be editing and uploading relatively large Python files (>5K).  In this case, the development loop can _still_ be a somewhat slow process:
+[Micropython](http://micropython.org) greatly simplifies this workflow.  It includes an interactive REPL for testing and development. Its _paste mode_ (`Ctrl-E`) makes it trivial to test small chunks of code.  But for typical projects, you'll often be editing and uploading relatively large Python files (say >5K).  In this case, the development loop can _still_ be a somewhat slow process:
 
 1. Make a tiny change, perhaps to a single constant in some file
-1. Using a tool like [rshell](https://github.com/dhylands/rshell): `C-x` to exit the REPL, `cp file.py /board` to upload file over serial port [~15-20s for a 25K file at the default baud rate]
+1. Using a tool like [rshell](https://github.com/dhylands/rshell): `C-x` to exit the REPL, `cp file.py /board` to upload file over  serial port [up to ~15-20s for a large 25K file, at typical baud rates]
 1. Wait for microcontroller to reboot (which the rshell `cp` causes), and then reinitialize (perhaps by hand) [1-5s, e.g. for Wifi startup]
 1. Test your changes
+1. Goto step 1...
 
-So this still looks like a 10-30s "development loop" time.  `autoftp` enables a _much faster_ workflow for network-connected microcontrollers:
+So this can still constitue a 10-30s "development loop" time, more if you have to set some things up by hand on reboot.  `autoftp` enables a _much faster_ workflow for network-connected microcontrollers:
 
-1. Make a tiny change, perhaps to a single constant
-1. File changes are noticed automatically and the file is immediately uploaded to the micro-controller [0.5s for small file, <1s for files <25K]
+1. Make a tiny change, perhaps to a single constant, save your file
+1. File changes are noticed automatically and the file is immediately uploaded to the micro-controller [0.5s for small file, <1s for files up to 25K]
 1. Reload code and test
+1. Goto step 1...
 
 ## Usage Details
 
-Only files are watched and uploaded.  All files _must_ match one of the `-p` wildcard patterns (`*.py` by default), and must _not_ match any of the `-x` exclude pattern(s).  The latter is a good way to omit entire directories, etc.  By default, files are placed in directories relative to the FTP server's working directory (typically the root of the microcontroller).  
+Only files are watched and uploaded.  All files _must_ match one of the `-p` wildcard patterns (`*.py` by default), and must _not_ match any of the `-x` exclude pattern(s).  The latter is a good way to omit entire directories, etc.  Be aware that files in the current directory are referred to with a leading `./`, e.g., `./file.py`. By default, files are placed on the remote host in directories relative to the FTP server's working directory (typically the root of the microcontroller).
 
-If you need to pre-process one file type to produce another, you can use, e.g., `-s '*.suf, process` to run the script `process` on files matching `*.suf`.  `process` is called with the file as its only argument.  This script might produce one or more _other_ output files of different types, which are picked up for transfer, if specified.  If an uploaded file matches any of the `-k` patterns, it will be deleted after upload.  This is useful for files which should be transfered, but don't need to be kept locally.  Note that, since it only operates on _uploaded_ file, `-k` patterns must match files matched by the `-p` patterns to be effective.
+If you need to pre-process one file type to produce another, you can use, e.g., `-s '*.suf, process` to run the script `process` on files matching `*.suf`.  `process` is called with the file as its only argument, and presumable creates or updates _other_ files.  If they are matched by a `-p` flag, these files are picked up for auto-transfer.  
+
+If an uploaded file matches any of the `-k` patterns provided (if any), it will be deleted after upload.  This is useful for "temporary" files like compiled versions which should be transfered, but don't need to be kept locally cluttering the directory.  Note that, since it only operates on _uploaded_ file, `-k` patterns must match files matched by the `-p` patterns to be effective.
 
 An example might be: 
 
@@ -74,9 +79,9 @@ An example might be:
 % autoftp host.local -p '*.mpy' -s '*.py, mpy-cross' -k '*.mpy'
 ```
 
-which would auto-compile `.py` files into `.mpy` files and upload them.
+which would auto-compile `.py` files into `.mpy` files and upload them, deleting locally afterwards.
 
-N.B. If the files to process are _also_ being uploaded to the host, ensure your processing script does _not_ update the processed file itself, or endless loops will commence.  Script processing occurs before upload.
+N.B. If the files being created or modified by a `-s` script are _also_ being uploaded to the host, you must take care to prevent endless loops from commencing (e.g. by placing the script output files in a directory excluded using `-x`).  Script processing occurs before upload.
 
 ## Questions
 
