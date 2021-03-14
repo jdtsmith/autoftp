@@ -176,9 +176,9 @@ if __name__ == "__main__":
     if debug: welcome += " (debugging enabled)"
     log(prefix = welcome + "\n\n") 
     log(prefix = '== Monitoring files matching: ', msg = "|".join(pats))
-    if expats: log(prefix='==  Excluding files matching: ', msg = "|".join(expats))
+    if expats: log(prefix='==  Excluding files matching: ', msg = ",".join(expats))
     if procpats: log(prefix='== Processing files matching: ',
-                     msg = "|".join([x['pattern']+':'+x['script'] for x in procpats]))
+                     msg = ",".join([x['pattern']+':'+x['script'] for x in procpats]))
     log(prefix = "\n")
     
     try:
