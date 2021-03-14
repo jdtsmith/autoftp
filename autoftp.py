@@ -16,6 +16,8 @@ colorama.init()
 _BRI=colorama.Style.BRIGHT
 _RST=colorama.Style.RESET_ALL
 
+__VERSION__='v0.12'
+
 def path_matches(path,patterns, key = None):
     ppath = Path(path) # *destination* must also match
     try:
@@ -182,7 +184,7 @@ if __name__ == "__main__":
         elif opt == "-d":
             debug = 2
 
-    welcome = "AutoFTP v0.11"
+    welcome = f"AutoFTP {__VERSION__}"
     if debug: welcome += " (debugging enabled)"
     log(prefix = welcome + "\n\n") 
     log(prefix = '== Monitoring files matching: ', msg = ",".join(pats))
