@@ -88,7 +88,32 @@ N.B. If the files to process are _also_ being uploaded to the host, ensure your 
 
 1. **Why not just use an FTP client?** In fact I used to use `ncftpput`, which can automatically find changed files and upload them.  But it adds 1-2s minimum extra overhead as it re-negotiates the FTP connection each time, and you either have to remember which file you were working on, or have it check the remote timestamp of all files (another ~5s or so).  `autoftp` takes all that friction entirely away.  Traditional recursive ftp clients like `ncftpput` are still useful for pre-seeding a file heirarchy from scratch.
 
+1. **What if the FTP server gets reset?** This can happen for example after a soft-reset.  In that case `autoftp` attempts to reconnect to the FTP server, and proceeds with the transfer.  But rather than soft reset'ing to try out your new script, see below for some other ideas. 
+
 ## Tips
+
+## Avoiding soft reset
+
+A simple way of "starting from scratch" is to soft-reset your MicroPython board with `Ctrl-D`.  This has the nice property of re-starting MicroPython with a clean slate without a full hardware boot.  But it also kills off your FTP server, etc.  A better way is to `re-run` your file after uploading it, for example using a simple script (defined in your `main.py`, for example), like:
+
+```python
+def unload(mod): 
+    mod_name = mod.__name__
+    import sys
+    if mod_name in sys.modules:
+        del sys.modules[mod_name]
+    return mod_name
+
+def run(mod):
+    name = unload(mod)
+    __import__(name)
+```
+
+Now you can just let `autoftp` transfer for you, and:
+
+```
+>>> run(myGreatModule)
+```
 
 ## Installing uftpd
 
