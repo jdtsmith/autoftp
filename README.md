@@ -25,12 +25,13 @@ To use, just run in a directory like `autoftp host`.  `autoftp` will start monit
 ## Usage
 
 ```
-Usage: autoftp ftphost -d --include=|-p 'a,b' --exclude=|-x 'c,d' --process=|-s 'e,f'
+Usage: autoftp ftphost -d --include=|-p --exclude=|-x --process=|-s --updelete|-k
   ftphost: FTP host to connect to
   -d: Enable debugging output
-  -p|--include='pat,pat': include patterns of files to match (default: '*.py')
-  -x|--exclude='pat,pat': filepath patterns to ignore (e.g. '*lib/*,secret*.py')
+  -p|--include='pat,pat,...': include patterns of files to match (default: '*.py')
+  -x|--exclude='pat,pat,...': filepath patterns to ignore (e.g. '*lib/*,secret*.py')
   -s|--process='pat,script': instead of uploading, run `script' on files matching `pat'
+  -k|--updelete='pat,pat,..': filepath patterns to delete after uploading
 ```
 
 `Ctrl-C` to quit.  
@@ -63,12 +64,14 @@ So this still looks like a 10-30s "development loop" time.  `autoftp` enables a 
 
 ## Usage Details
 
-Only files are watched and uploaded.  All files _must_ match one of the `-p` wildcard patterns (`*.py` by default), and must _not_ match any of the `-x` exclude pattern(s).  The latter is a good way to omit entire directories, etc.  By default, files are placed in directories relative to the FTP server's working directory (typically the root of the microcontroller).
+Only files are watched and uploaded.  All files _must_ match one of the `-p` wildcard patterns (`*.py` by default), and must _not_ match any of the `-x` exclude pattern(s).  The latter is a good way to omit entire directories, etc.  By default, files are placed in directories relative to the FTP server's working directory (typically the root of the microcontroller).  
 
-If you need to pre-process one file type to produce another, you can use, e.g., `-s '*.suf, process` to run the script `process` on files matching `*.suf`.  `process` is called with the file as its only argument.  This script might produce one or more _other_ output files of different types, which are picked up for transfer, if specified.  An example might be: 
+If you need to pre-process one file type to produce another, you can use, e.g., `-s '*.suf, process` to run the script `process` on files matching `*.suf`.  `process` is called with the file as its only argument.  This script might produce one or more _other_ output files of different types, which are picked up for transfer, if specified.  If an uploaded file matches any of the `-k` patterns, it will be deleted after upload.  This is useful for files which should be transfered, but don't need to be kept locally.  Note that, since it only operates on _uploaded_ file, `-k` patterns must match files matched by the `-p` patterns to be effective.
+
+An example might be: 
 
 ```
-% autoftp host.local -p '*.mpy' -s '*.py, mpy-cross'
+% autoftp host.local -p '*.mpy' -s '*.py, mpy-cross' -k '*.mpy'
 ```
 
 which would auto-compile `.py` files into `.mpy` files and upload them.

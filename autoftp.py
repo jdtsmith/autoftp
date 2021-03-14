@@ -16,6 +16,15 @@ colorama.init()
 _BRI=colorama.Style.BRIGHT
 _RST=colorama.Style.RESET_ALL
 
+def path_matches(path,patterns, key = None):
+    ppath = Path(path) # *destination* must also match
+    try:
+        match = next(x for x in patterns if ppath.match(x[key] if key else x))
+    except StopIteration:
+        return None
+    else:
+        return match
+
 def log(msg = None,error = False, prefix = None, **kwds):
     file = sys.stderr if error else None
     if prefix:
@@ -25,15 +34,14 @@ def log(msg = None,error = False, prefix = None, **kwds):
         print(col + msg + colorama.Style.RESET_ALL,file=file, **kwds)
 
 class FTPWatcher(PatternMatchingEventHandler):
-    def __init__(self, host, debug = None,
-                 process_patterns = None,
-                 patterns = None,  **kwargs):
+    def __init__(self, host, patterns = None,  process_patterns = None,
+                 upload_delete_patterns = None, debug = None, **kwargs):
         patterns = patterns or []
         if process_patterns:
             patterns.extend(x['pattern'] for x in process_patterns)
         super().__init__(patterns = patterns, **kwargs)
         self.process_patterns = process_patterns
-
+        self.upload_delete_patterns = upload_delete_patterns
         self.host = host
         self.debug = debug
         self.ftp_start()
@@ -75,12 +83,7 @@ class FTPWatcher(PatternMatchingEventHandler):
                 self.ftp.mkd(cur)
 
     def on_moved(self, event):
-        try:
-            ppath = Path(event.dest_path) # *destination* must match
-            next(x for x in self.patterns if ppath.match(x['pattern']))
-        except StopIteration:
-            return
-        else:
+        if path_matches(event.dest_path, self.patterns):
             self.handle(event.dest_path)
         
     def on_created(self, event):
@@ -92,15 +95,12 @@ class FTPWatcher(PatternMatchingEventHandler):
     def handle(self,path):
         l = time.localtime()
         log(prefix=f">> {_BRI}{l.tm_hour:>2}:{l.tm_min:02}{_RST} Processing {_BRI}{path}{_RST}...")
+        ppath = Path(path)
 
         t0 = time.perf_counter()
         if self.process_patterns:
-            ppath = Path(path)
-            try:
-                match = next(x for x in self.process_patterns if ppath.match(x['pattern']))
-            except StopIteration:
-                pass
-            else:
+            match = path_matches(path, self.process_patterns, key = 'pattern')
+            if match:
                 try:
                     subprocess.run((match['script'], path), check = True)
                 except (FileNotFoundError, subprocess.CalledProcessError) as e:
@@ -119,8 +119,7 @@ class FTPWatcher(PatternMatchingEventHandler):
                     log("success: ", end = '')
                 with open(path,"rb") as f:
                     self.ftp.storbinary("STOR " + path, f)
-                log(f"transferred in {_BRI}{time.perf_counter()-t0:.2}s{_RST}")
-                break
+                log(f"transferred in {_BRI}{time.perf_counter()-t0:.2}s{_RST}", end='', flush = True)
             except (ConnectionError, TimeoutError, EOFError):
                 log("\nFTP connection problem, attempting restart", error = True)
                 self.ftp_start()
@@ -137,29 +136,36 @@ class FTPWatcher(PatternMatchingEventHandler):
                         continue
                 log("\nUnhandled FTP error: " + repr(e), error = True)
                 return
+            else:
+                if self.upload_delete_patterns and path_matches(path, self.upload_delete_patterns):
+                    os.remove(path)
+                    log(" [local file deleted]")
+                else:
+                    log(prefix = "\n")
+                break
             tries += 1
         if tries == 5:
             log("FTP re-connect failed, aborting", error = True)
 
-
 usage = '''
-Usage: autoftp ftphost -d --include=|-p 'a,b' --exclude=|-x 'c,d' --process=|-s 'e,f'
+Usage: autoftp ftphost -d --include=|-p --exclude=|-x --process=|-s --updelete|-k
   ftphost: FTP host to connect to
   -d: Enable debugging output
-  -p|--include='pat,pat': include patterns of files to match (default: '*.py')
-  -x|--exclude='pat,pat': filepath patterns to ignore (e.g. '*lib/*,secret*.py')
+  -p|--include='pat,pat,...': include patterns of files to match (default: '*.py')
+  -x|--exclude='pat,pat,...': filepath patterns to ignore (e.g. '*lib/*,secret*.py')
   -s|--process='pat,script': instead of uploading, run `script' on files matching `pat'
+  -k|--updelete='pat,pat,..': filepath patterns to delete after uploading
 '''
             
 if __name__ == "__main__":
     debug = None
-    opts,args = getopt(sys.argv[1:],"p:x:s:d",["include=","exclude=","process="])
+    opts,args = getopt(sys.argv[1:],"p:x:s:k:d",["include=","exclude=","process=","updelete="])
     if len(args) < 1:
         log(usage, error = True)
         exit()
     host = args[0]
     pats = ["*.py"]
-    expats, procpats = [], []
+    expats, procpats, delpats = [], [], []
     for opt,arg in opts:
         if opt in   ("--include","-p"):
             pats = [x.strip() for x in arg.split(",")]
@@ -171,22 +177,30 @@ if __name__ == "__main__":
                 log("Error in process option: " + usage,error = True)
                 exit()
             procpats.append(dict(zip(("pattern","script"),pp)))
+        elif opt in ("--updelete","-k"):
+            delpats.extend([x.strip() for x in arg.split(",")])
         elif opt == "-d":
             debug = 2
 
     welcome = "AutoFTP v0.11"
     if debug: welcome += " (debugging enabled)"
     log(prefix = welcome + "\n\n") 
-    log(prefix = '== Monitoring files matching: ', msg = "|".join(pats))
-    if expats: log(prefix='==  Excluding files matching: ', msg = ",".join(expats))
-    if procpats: log(prefix='== Processing files matching: ',
-                     msg = ",".join([x['pattern']+':'+x['script'] for x in procpats]))
+    log(prefix = '== Monitoring files matching: ', msg = ",".join(pats))
+    if expats:
+        log(prefix='==  Excluding files matching: ', msg = ",".join(expats))
+    if procpats:
+        log(prefix='== Processing files matching: ',
+            msg = ",".join([x['pattern']+':'+x['script'] for x in procpats]))
+    if delpats:
+        log(prefix='== Deleting uploaded files matching: ', msg = ",".join(delpats))
     log(prefix = "\n")
-    
+
+    log(prefix = f'== Connecting to FTP...\n')
     try:
         ftp_handler = FTPWatcher(host,
                                  patterns = pats, ignore_patterns = expats,
-                                 process_patterns = procpats, ignore_directories = True,
+                                 process_patterns = procpats, upload_delete_patterns = delpats,
+                                 ignore_directories = True,
                                  case_sensitive = True, debug = debug)
         observer = Observer()
         observer.schedule(ftp_handler, '.', recursive=True)
@@ -197,7 +211,7 @@ if __name__ == "__main__":
     except (KeyboardInterrupt, SystemExit):
         pass
     finally:
-        log(prefix = " Quitting AutoFTP...\n")
+        log(prefix = "\nQuitting AutoFTP...\n")
         try:
             if ftp_handler and ftp_handler.ftp:
                 ftp_handler.ftp.quit()
