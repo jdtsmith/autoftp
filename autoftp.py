@@ -16,7 +16,7 @@ colorama.init()
 _BRI=colorama.Style.BRIGHT
 _RST=colorama.Style.RESET_ALL
 
-__VERSION__='v0.12'
+__VERSION__='v0.13'
 
 def path_matches(path,patterns, key = None):
     ppath = Path(path) # *destination* must also match
@@ -27,17 +27,23 @@ def path_matches(path,patterns, key = None):
     else:
         return match
 
-def log(msg = None,error = False, prefix = None, **kwds):
+def log(msg = None,error = False, dry_run = False, prefix = None, **kwds):
     file = sys.stderr if error else None
     if prefix:
         print(prefix, file = file, end = '', flush = True, **kwds)
     if msg:
-        col = colorama.Fore.RED if error else colorama.Fore.GREEN
-        print(col + msg + colorama.Style.RESET_ALL,file=file, **kwds)
+        if error:
+            col = colorama.Fore.RED
+        elif dry_run:
+            col = colorama.Fore.BLUE
+        else:
+            col = colorama.Fore.GREEN
+        print(col + msg + colorama.Fore.RESET,file=file, **kwds)
 
 class FTPWatcher(PatternMatchingEventHandler):
     def __init__(self, host, patterns = None,  process_patterns = None,
-                 upload_delete_patterns = None, debug = None, **kwargs):
+                 upload_delete_patterns = None, debug = None, dry_run = False,
+                 **kwargs):
         patterns = patterns or []
         if process_patterns:
             patterns.extend(x['pattern'] for x in process_patterns)
@@ -46,6 +52,7 @@ class FTPWatcher(PatternMatchingEventHandler):
         self.upload_delete_patterns = upload_delete_patterns
         self.host = host
         self.debug = debug
+        self.dry_run = dry_run
         self.ftp_start()
 
     def ftp_start(self):
@@ -69,7 +76,7 @@ class FTPWatcher(PatternMatchingEventHandler):
     def is_ok(self):
         try:
             self.ftp.voidcmd("NOOP")
-        except (ftplib.error_reply, TimeoutError, EOFError):
+        except (ftplib.error_reply, TimeoutError, EOFError, ConnectionError):
             return False
         else:
             return True
@@ -119,9 +126,13 @@ class FTPWatcher(PatternMatchingEventHandler):
                     if not self.is_ok(): raise ConnectionError
                     self.mkdirs(subdir)
                     log("success: ", end = '')
-                with open(path,"rb") as f:
-                    self.ftp.storbinary("STOR " + path, f)
-                log(f"transferred in {_BRI}{time.perf_counter()-t0:.2}s{_RST}", end='', flush = True)
+                if self.dry_run:
+                    log("would have uploaded", dry_run = True, end = '', flush = True)
+                else: 
+                    with open(path,"rb") as f:
+                        self.ftp.storbinary("STOR " + path, f)
+                    log(f"transferred in {_BRI}{time.perf_counter()-t0:.2}s{_RST}",
+                        end='', flush = True)
             except (ConnectionError, TimeoutError, EOFError):
                 log("\nFTP connection problem, attempting restart", error = True)
                 self.ftp_start()
@@ -140,19 +151,23 @@ class FTPWatcher(PatternMatchingEventHandler):
                 return
             else:
                 if self.upload_delete_patterns and path_matches(path, self.upload_delete_patterns):
-                    os.remove(path)
-                    log(" [local file deleted]")
+                    if dry_run:
+                        log(" [would have deleted locally]", dry_run = True)
+                    else:
+                        os.remove(path)
+                        log(" [local file deleted]")
                 else:
                     log(prefix = "\n")
                 break
             tries += 1
         if tries == 5:
-            log("FTP re-connect failed, aborting", error = True)
+            log("FTP re-connect failed, file not transfered, aborting", error = True)
 
 usage = '''
 Usage: autoftp ftphost -d --include=|-p --exclude=|-x --process=|-s --updelete|-k
   ftphost: FTP host to connect to
-  -d: Enable debugging output
+  -d|--debug: Enable debugging output
+  -n|--dry-run: Uploads and local deletes are logged, but do not occur
   -p|--include='pat,pat,...': include patterns of files to match (default: '*.py')
   -x|--exclude='pat,pat,...': filepath patterns to ignore (e.g. '*lib/*,secret*.py')
   -s|--process='pat,script': instead of uploading, run `script' on files matching `pat'
@@ -160,8 +175,9 @@ Usage: autoftp ftphost -d --include=|-p --exclude=|-x --process=|-s --updelete|-
 '''
             
 if __name__ == "__main__":
-    debug = None
-    opts,args = getopt(sys.argv[1:],"p:x:s:k:d",["include=","exclude=","process=","updelete="])
+    debug, dry_run = None, None
+    opts,args = getopt(sys.argv[1:],"p:x:s:k:dn",
+                       ["include=","exclude=","process=","updelete=","debug","dry-run"])
     if len(args) < 1:
         log(usage, error = True)
         exit()
@@ -181,11 +197,16 @@ if __name__ == "__main__":
             procpats.append(dict(zip(("pattern","script"),pp)))
         elif opt in ("--updelete","-k"):
             delpats.extend([x.strip() for x in arg.split(",")])
-        elif opt == "-d":
+        elif opt in ("--dry-run","-n"):
+            dry_run = True
+        elif opt in ("--debug","-d"):
             debug = 2
 
     welcome = f"AutoFTP {__VERSION__}"
     if debug: welcome += " (debugging enabled)"
+    if dry_run: welcome += (colorama.Fore.BLUE +
+                            " (dry-run: no uploads or deletes will occur)" +
+                            colorama.Fore.RESET)
     log(prefix = welcome + "\n\n") 
     log(prefix = '== Monitoring files matching: ', msg = ",".join(pats))
     if expats:
@@ -202,14 +223,15 @@ if __name__ == "__main__":
         ftp_handler = FTPWatcher(host,
                                  patterns = pats, ignore_patterns = expats,
                                  process_patterns = procpats, upload_delete_patterns = delpats,
-                                 ignore_directories = True,
-                                 case_sensitive = True, debug = debug)
+                                 ignore_directories = True, case_sensitive = True,
+                                 debug = debug, dry_run = dry_run)
         observer = Observer()
         observer.schedule(ftp_handler, '.', recursive=True)
         observer.start()
         while observer.is_alive():
             observer.join(30)
             if not ftp_handler.is_ok():
+                log("== FTP connection problem, attempting restart", error = True)
                 ftp_handler.ftp_start()
     except (KeyboardInterrupt, SystemExit):
         pass
@@ -221,5 +243,5 @@ if __name__ == "__main__":
             if observer:
                 observer.stop()
                 observer.join()
-        except (NameError, ConnectionError):
+        except (NameError, ConnectionError, AttributeError):
             pass
