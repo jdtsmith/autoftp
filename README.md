@@ -71,7 +71,7 @@ Only files are watched and uploaded.  All files _must_ match one of the `-p` wil
 
 If you need to pre-process one file type to produce another, you can use, e.g., `-s '*.suf, process` to run the script `process` on files matching `*.suf`.  `process` is called with the file as its only argument, and presumable creates or updates _other_ files.  If they are matched by a `-p` flag, these files are picked up for auto-transfer.  
 
-If an uploaded file matches any of the `-k` patterns provided (if any), it will be deleted after upload.  This is useful for "temporary" files like compiled versions which should be transfered, but don't need to be kept locally cluttering the directory.  Note that, since it only operates on _uploaded_ file, `-k` patterns must match files matched by the `-p` patterns to be effective.
+If an uploaded file matches any of the `-k` patterns provided (if any), it will be deleted after successful upload (**caution: `-k` deletes files locally**).  This is useful for "temporary" files like compiled versions which should be transfered, but don't need to be kept locally cluttering the directory.  Note that, since it only operates on _uploaded_ file, `-k` patterns must match files matched by the `-p` patterns to be effective.
 
 An example might be: 
 
