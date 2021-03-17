@@ -68,7 +68,7 @@ An edit/compile/build/upload "development loop" cycle well over one minute is no
 1. Test your changes
 1. Goto step 1...
 
-So this can still constitue a 10-30s "development loop" time, more if you have to set some things up by hand on reboot.  `autoftp` enables a _much faster_ workflow for network-connected microcontrollers:
+So this can still constitute a 10-30s "development loop" time, more if you have to set some things up by hand on reboot.  `autoftp` enables a _much faster_ workflow for network-connected microcontrollers:
 
 1. Make a tiny change, perhaps to a single constant, save your file
 1. File changes are noticed automatically and the file is immediately uploaded to the micro-controller [0.5s for small file, <1s for files up to 25K]
@@ -77,18 +77,17 @@ So this can still constitue a 10-30s "development loop" time, more if you have t
 
 ## Usage Details
 
-Only files are watched and uploaded.  All files _must_ match one of the `-p|--include` wildcard patterns (`*.py` by default), and must _not_ match any of the `-x|--exclude` exclude pattern(s).  The latter is a good way to omit entire directories, etc.  Be aware that files in the current directory are referred to with a leading `./`, e.g., `./file.py`, and that patterns match against the entire path name (directory included). By default, files are placed on the remote host in directories relative to the FTP server's working directory (typically the root of the microcontroller).
+Only files are watched and uploaded.  All files _must_ match one of the `-p|--include` wildcard patterns (`*.py` by default), and _must not_ match any of the `-x|--exclude` exclude pattern(s).  The latter is a good way to omit entire directories, etc.  Be aware that files in the current directory are referred to with a leading `./`, e.g., `./file.py`, and that patterns match against the entire path name (directory included). By default, files are placed on the remote host in directories relative to the FTP server's working directory (typically the root of the microcontroller).
 
 ### Pre-process files with scripts
 
-If you need to pre-process one file type to produce another, you can use, e.g., `-s '*.ext, process` to run the script `process` on files matching `*.ext`.  `process` is called with the path to the matched file as its only argument, and, although it may do anything with it, it presumably creates or updates _other_ files.  If these script-created are matched by a `-p` flag, they are picked up for auto-transfer.
+If you need to pre-process one file type to produce another, you can use, e.g., `-s '*.ext, process'` to run the script `process` on files matching `*.ext`.  `process` is called with the path to the matched file as its only argument, and, although it may do anything with it, it presumably creates or updates _other_ files.  If these script-created files are matched by a `-p` flag, they are then picked up for auto-transfer.
 
-If an _uploaded file_ matches any of the `-k|--up-delete` patterns provided (if any), it will be _deleted_ after successful upload (**caution: `-k` deletes files locally!!**).  This is quite useful for "temporary" files like compiled versions which should be transfered in lieu of their source files, but which also don't need to be kept locally, cluttering the directory.  Note that, since it only operates on _successfully uploaded_ files, `-k|--up-delete` patterns _must_ match files also matched by at least one of the `-p|--include` patterns (and _none_ of the `-x|--exclude` patterns) to operate.
+In addition, if an _uploaded file_ matches any of the `-k|--up-delete` patterns provided (if any), the local version of that file will be _deleted_ after successful upload (**caution: `-k` deletes files locally!!**).  This is quite useful for "temporary" files like compiled versions which should be transfered in lieu of their source files, but which also don't need to be kept locally, cluttering the directory.  Note that, since it only operates on _successfully uploaded_ files, `-k|--up-delete` patterns _must_ match files also matched by at least one of the `-p|--include` patterns (and _none_ of the `-x|--exclude` patterns) to operate.
 
 ### Dry Runs
 
 Especially if using `-k|--up-delete`, consider first checking that your patterns are working as expected by using `--dry-run|-n`.  It logs (in blue) what actions `autoftp` _would_ have taken, omitting uploads, local deletes, and any remote commands. 
-
 
 N.B. If the files being created or modified by a `-s|--process` script are _also_ being uploaded to the host, you must take care to prevent endless loops from commencing (e.g. by placing the script output files in a directory excluded using `-x`).  Script processing occurs before upload.
 
@@ -98,8 +97,7 @@ If your FTP server supports the `SITE` FTP command for sending custom commands t
 
 If `-r|--remote-match` patterns are specified, the `remote-command` will _only_ be run after uploading files which match these patterns.
 
-N.B.: The `SITE` command *must not block*, or the FTP server will likely stop functioning. In the context of `exec` MicroPython commands, these must return immediately (typically after setting a flag in the main module/object/etc. to signal a stop and reload).  See below for examples. 
-
+N.B.: The `SITE` command *must not block*, or the FTP server will likely stop functioning. In the context of `exec`'d MicroPython commands, these must return immediately (typically after setting a flag in the main module/object/etc. to signal a stop and reload).  See below for examples. 
 
 ### `.autoftp` Config File
 
@@ -116,26 +114,27 @@ with one option per line (omitting the leading dashes).  No quote marks are requ
 ### Examples
 
 1. Upload all `.py` files in the current or any subdirectory:
-```
-% autoftp.py host.local
-```
+   ```
+   % autoftp.py host.local
+   ```
 1. Auto-compile `.py` files into `.mpy` files and upload, deleting them locally afterwards:
-```
-% autoftp.py host.local -p '*.mpy' -s '*.py, mpy-cross' -k '*.mpy'
-```
+   ```
+   % autoftp.py host.local -p '*.mpy' -s '*.py, mpy-cross' -k '*.mpy'
+   ```
 1. A full configuration using an `.autoftp` config file with all options (run simply as `autoftp.py`):
-```
-host: esp32.local
-include: *.mpy, *.inc
-exclude: *test/*
-process: *.py, mpy-cross
-up-delete: *.mpy
-remote-match: *main.mpy, *lib/*.mpy
-remote-command: 
-print("Reloading Main:")
-stop_reload('%%f','main')
-```
-This will configure `autoftp` to upload `.mpy` and `.inc` files to `esp32.local`, omitting anything in the `test/` directory.  It pre-processes `.py` files into `.mpy` files using `mpy-cross`, deleting these generated `.mpy` files after they are uploaded.  And for the file `main.mpy`, as well as all `.mpy` files under `lib/`, after upload, `autoftp` will run a remote command reloading the relevant modules and the `main` module itself (see below for ideas on how to implement this). 
+   ```
+   host: esp32.local
+   include: *.mpy, *.inc
+   exclude: *test/*
+   process: *.py, mpy-cross
+   up-delete: *.mpy
+   remote-match: *main.mpy, *lib/*.mpy
+   remote-command: 
+   print("Reloading Main:")
+   reload('%%f','main')
+   ```
+   This will configure `autoftp` to upload `.mpy` and `.inc` files to `esp32.local`, omitting anything in the `test/` directory.  It pre-processes `.py` files into `.mpy` files using `mpy-cross`, deleting these generated `.mpy` files after they are uploaded.  And for the file `main.mpy`, as well as all `.mpy` files under `lib/`, after upload, `autoftp` will run send a remote command reloading the relevant modules and the `main` module itself (see below for ideas on how to implement this).
+1. A complete example `remote-command` based reloading of multiple modules can be found in [examples](https://github.com/jdtsmith/autoftp/tree/remote-command/example).
 
 ## Questions
 
@@ -145,15 +144,15 @@ This will configure `autoftp` to upload `.mpy` and `.inc` files to `esp32.local`
 
 1. **Does autoftp delete files remotely?** For safety, file deletions events in the directory path are _not_ mirrored on the FTP server.  With the `--updelete=|-k` option, any matching files _which have been successfully uploaded_ are deleted _locally_.  These are typically temporary files produced by the `-s` script option.
 
-1. **Why not just use an FTP client?** In fact tools like `ncftpput` can automatically find changed files (based on size and modification time) and upload them.  But this adds 1-3s minimum extra overhead as it re-negotiates the FTP connection and checks for changed files each time.  So you either have to remember which file you were working on, or have it check the remote timestamp of all files (another ~5s or more).  `autoftp` takes all that friction entirely away and reduces transfer time below ~1s.  Traditional recursive ftp clients like `ncftpput` are still quite useful for pre-seeding a file heirarchy from scratch.  And you can easily delete remote files in an interactive FTP session. 
+1. **Why not just use an FTP client?** In fact tools like `ncftpput` can automatically find changed files (based on size and modification time) and upload them.  But this adds 1-3s minimum extra overhead as it re-negotiates the FTP connection and checks for changed files each time.  So you either have to remember which file you were working on, or have it check the remote timestamp of all files (another ~5s or more).  `autoftp` takes all that friction entirely away and reduces transfer time below ~1s.  And of course they don't have the ability to run remote commands. Traditional recursive ftp clients like `ncftpput` are still quite useful for pre-seeding a file heirarchy from scratch.  And you can easily delete remote files using an interactive FTP session (which is quite a bit faster than using `rshell`). 
 
-1. **What if the FTP server gets reset?** This can happen for example after a soft-reset.  In that case `autoftp` attempts to reconnect to the FTP server, and proceeds with the transfer.  But rather than soft reset'ing to try out your new script, see below for some other ideas. 
+1. **What if the FTP server gets reset?** This can happen for example after a hard or soft-reset.  If it loses the connection, `autoftp` attempts to reconnect to the FTP server, and proceeds with the transfer.  But rather than soft reset'ing to try out your new script, see below for some other ideas. 
 
 ## Tips
 
 ## Avoiding soft reset
 
-A simple way of "starting from scratch" is to soft-reset your MicroPython board with `Ctrl-D`.  This has the nice property of re-starting MicroPython with a clean slate without a full hardware boot.  But it also closes your FTP server, etc.  While `autoftp` will re-connect if it finds the FTP link broken, this takes several seconds.  A quicker way is to `re-run` your file after uploading it, for example using a simple script (defined in your `main.py`, for example), like:
+A simple way of "starting from scratch" is to soft-reset your MicroPython board with `Ctrl-D`.  This has the nice property of re-starting MicroPython with a clean slate without a full hardware boot.  But it also closes your FTP server, etc.  While `autoftp` will re-connect if it finds the FTP link broken, this takes several seconds.  Sometimes this may be required, but a quicker way is to `re-run` your file after uploading it, for example using a simple script (as defined in your `main.py`, for example), like:
 
 ```python
 import sys
@@ -182,68 +181,14 @@ Often, however, your main module imports other modules, so will _also_ need to b
 >>> run(('otherModule','myMainModule'))
 ```
 
-## Auto re-running your project using ``remote-command`
+## Auto re-running your project using `remote-command`
 
-If your FTP server supports `exec`ing code, you can automatically re-run the main program or module using `--remote-command`.  Find one complete example of how to do this is in the `example/` directory. 
+If your FTP server supports `exec`ing code, you can automatically re-run the main program or module using `--remote-command`.  Find a complete simple example of how to do this is in the [`example/`](https://github.com/jdtsmith/autoftp/tree/remote-command/example) directory. Also see this directory for suggested wifi and ftp startup in a MicroPython context. 
 
 ## Installing uftpd
 
-[`uftpd.py`](https://github.com/robert-hh/FTP-Server-for-ESP8266-ESP32-and-PYBD) is a small uftpd server which runs in the background waiting for socket connections.  To install, just drop the `uftpd.py` file on your microcontroller (perhaps in the `lib/` subdirectory), and `import` it in your `boot.py`.
+[`uftpd.py`](https://github.com/robert-hh/FTP-Server-for-ESP8266-ESP32-and-PYBD) is a small MicroPytyon FTP server which runs in the background waiting for socket connections.  To install, just drop the `uftpd.py` file on your microcontroller (perhaps in the `lib/` subdirectory), and `import` it in your `boot.py`.
 
-### Starting WiFi and `uftpd`
-
-Typical for an ESP32 or related device.
-
-in `boot.py`:
-```python
-#Start ftp server
-import wifi
-wifi.start()
-import uftpd
-```
-
-in `wifi.py`:
-```python
-# Connect wifi and set host
-import time
-import network
-
-HOSTNAME="myhost"
-SSID='MYSSID'
-PASSWORD='MYPASSWD'
-wlan = network.WLAN(network.STA_IF)
-
-def activate(timeout=10):
-    wlan.active(True)
-    for _ in range(5):
-        try:
-            wlan.config(dhcp_hostname=HOSTNAME)
-        except OSError:
-            time.sleep_ms(500)
-
-    start=time.ticks_ms()
-    
-    if not wlan.isconnected():
-        wlan.connect(SSID,PASSWORD) 
-        while not wlan.isconnected():
-            time.sleep_ms(150)
-            if time.ticks_diff(time.ticks_ms(),start)/1e3 > timeout: break
-    
-def start(quiet=False,log_callback=None):
-    for i in range(1,11):
-        if not quiet: print('connecting to network{}...'.
-                            format(" [{}]".format(i) if i>1 else ""))
-        activate()
-        if wlan.isconnected(): break
-        if log_callback: log_callback(i)
-        time.sleep_ms(500)
-    if not wlan.isconnected():
-        print("Failed to connect wifi!")
-        return(None)
-
-    if not quiet: print(HOSTNAME,'network config:', wlan.ifconfig())
-    return(wlan)
-```
 
 
 
