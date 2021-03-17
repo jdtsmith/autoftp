@@ -1,0 +1,3 @@
+host: esp32.local
+remote-match: *my*.py
+remote-command: reload_stop('%%f')
