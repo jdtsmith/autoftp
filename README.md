@@ -1,6 +1,6 @@
 # autoftp — Fast remote development over FTP
 
-Auto-send matching files over the network with FTP.  Watches for changes in files with matching names in the current directory and all subdirectories, quickly sending them by FTP to a remote server.  While this works with any files and remote FTP server, it is ideal for network-connected microcontroller development.  Matching files can optionally be processed with a script.
+Auto-send matching files over the network with FTP.  Watches for changes in files with matching names in the current directory and all subdirectories, quickly sending them by FTP to a remote server.  While this works with any files and remote FTP server, it is ideal for network-connected microcontroller development with interpreted frameworks like [MicroPython](http://micropython.org).  Matching files can optionally be processed with a script.
 
 Click to see `autoftp` in action:
 <div align="left">
@@ -60,7 +60,7 @@ Micro-controller development can be tedious.  With C-based firmware frameworks, 
 
 An edit/compile/build/upload "development loop" cycle well over one minute is not atypical. When using such methods, I often _forget what it was I was testing_ before an iteration completes.  Painful!
 
-[Micropython](http://micropython.org) greatly simplifies this workflow.  It includes an interactive REPL for testing and development. Its _paste mode_ (`Ctrl-E`) makes it trivial to test small chunks of code.  But for typical projects, you'll often be editing and uploading relatively large Python files (say >5K).  In this case, the development loop can _still_ be a somewhat slow process:
+[MicroPython](http://micropython.org) greatly simplifies this workflow.  It includes an interactive REPL for testing and development. Its _paste mode_ (`Ctrl-E`) makes it trivial to test small chunks of code.  But for typical projects, you'll often be editing and uploading relatively large Python files (say >5K).  In this case, the development loop can _still_ be a somewhat slow process:
 
 1. Make a tiny change, perhaps to a single constant in some file
 1. Using a tool like [rshell](https://github.com/dhylands/rshell): `C-x` to exit the REPL, `cp file.py /board` to upload file over  serial port [up to ~15-20s for a large 25K file, at typical baud rates]
