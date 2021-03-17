@@ -150,7 +150,11 @@ with one option per line (omitting the leading dashes).  No quote marks are requ
 
 ## Tips
 
-## Avoiding soft reset
+### Installing uftpd
+
+[`uftpd.py`](https://github.com/robert-hh/FTP-Server-for-ESP8266-ESP32-and-PYBD) is a small MicroPytyon FTP server which runs in the background waiting for socket connections.  To install, just drop the `uftpd.py` file on your microcontroller (perhaps in the `lib/` subdirectory), and `import` it in your `boot.py`.
+
+### Avoiding soft reset
 
 A simple way of "starting from scratch" is to soft-reset your MicroPython board with `Ctrl-D`.  This has the nice property of re-starting MicroPython with a clean slate without a full hardware boot.  But it also closes your FTP server, etc.  While `autoftp` will re-connect if it finds the FTP link broken, this takes several seconds.  Sometimes this may be required, but a quicker way is to `re-run` your file after uploading it, for example using a simple script (as defined in your `main.py`, for example), like:
 
@@ -181,13 +185,11 @@ Often, however, your main module imports other modules, so will _also_ need to b
 >>> run(('otherModule','myMainModule'))
 ```
 
-## Auto re-running your project using `remote-command`
+### Auto re-running your project using `remote-command`
 
 If your FTP server supports `exec`ing code, you can automatically re-run the main program or module using `--remote-command`.  Find a complete simple example of how to do this is in the [`example/`](https://github.com/jdtsmith/autoftp/tree/remote-command/example) directory. Also see this directory for suggested wifi and ftp startup in a MicroPython context. 
 
-## Installing uftpd
 
-[`uftpd.py`](https://github.com/robert-hh/FTP-Server-for-ESP8266-ESP32-and-PYBD) is a small MicroPytyon FTP server which runs in the background waiting for socket connections.  To install, just drop the `uftpd.py` file on your microcontroller (perhaps in the `lib/` subdirectory), and `import` it in your `boot.py`.
 
 
 
