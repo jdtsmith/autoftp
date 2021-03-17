@@ -68,11 +68,11 @@ An edit/compile/build/upload "development loop" cycle well over one minute is no
 1. Test your changes
 1. Goto step 1...
 
-So this can still constitute a 10-30s "development loop" time, more if you have to set some things up by hand on reboot.  `autoftp` enables a _much faster_ workflow for network-connected microcontrollers:
+This can _still_ constitute a 10-30s "development loop" time, maybe more if you have to set some things up by hand on reboot.  `autoftp` enables a _much faster_ workflow for network-connected microcontrollers:
 
 1. Make a tiny change, perhaps to a single constant, save your file
 1. File changes are noticed automatically and the file is immediately uploaded to the micro-controller [0.5s for small file, <1s for files up to 25K]
-1. Reload code and test
+1. Reload code and test (perhaps automatically!  see below)
 1. Goto step 1...
 
 ## Usage Details
