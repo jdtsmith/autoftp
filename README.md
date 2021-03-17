@@ -13,7 +13,7 @@ Click to see `autoftp` in action:
 
 ```
 % pip install colorama watchdog
-% autoftp host
+% autoftp.py hostname
 ```
 
 Install the [`uftpd.py`](https://github.com/robert-hh/FTP-Server-for-ESP8266-ESP32-and-PYBD) micro-FTP server on your micro-controller, and set it up to run on boot (see below for tips).
