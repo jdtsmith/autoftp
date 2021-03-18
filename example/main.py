@@ -20,12 +20,12 @@ def reload_stop(mod):
         unload((mod,'mymod'))
     global mymod
     mymod = __import__('mymod') 
-    if mmod: mmod.stop()
+    if mObj: mObj.stop()
 
 def start():
-    global mmod
-    mmod = mymod.myModule()
-    mmod.start()
+    global mObj
+    mObj = mymod.myModule()
+    mObj.start()
 
 print(">> myModule: Initial Startup!")
 while True:
