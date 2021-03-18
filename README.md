@@ -93,7 +93,7 @@ N.B. If the files being created or modified by a `-s|--process` script are _also
 
 ### Remote Commands
 
-If your FTP server supports the `SITE` FTP command for sending custom commands to the server, you can specify a command to send after files are uploaded with `-r|--remote-command`.  If configured in the `.autoftp` config file (see below), the remote command can even be multi-line.  Note that newline characters are not permitted in FTP commands, so they are translated to null characters ('\0').  Your FTP server's `SITE` handlers would need to be able to translate these.  The [`uftpd.py`](https://github.com/robert-hh/FTP-Server-for-ESP8266-ESP32-and-PYBD) MicroPython FTP server includes such support for `exec`'ing remote commands.
+If your FTP server supports the `SITE` FTP command for sending custom commands to the server, you can specify a command to send after files are uploaded with `-r|--remote-command`.  If configured in the `.autoftp` config file (see below), the remote command can even be multi-line.  Note that newline characters are not permitted in FTP commands, so they are translated to null characters ('\0').  Your FTP server's `SITE` handlers would need to be able to translate these.  The [`uftpd.py`](https://github.com/robert-hh/FTP-Server-for-ESP8266-ESP32-and-PYBD) MicroPython FTP server includes such support for `exec`'ing remote python statements.
 
 If `-r|--remote-match` patterns are specified, the `remote-command` will _only_ be run after uploading files which match these patterns.
 
