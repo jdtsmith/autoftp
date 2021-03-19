@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-# autoftp: auto-send changed files matching a pattern
-# 2021, J.D. Smith
+# autoftp: auto-send changed files matching a pattern, with script and remote
+#          commands processing
+# External Dependencies: colorama, watchdog
+# (c) 2021, J.D. Smith
 import os
 import sys
 import time
