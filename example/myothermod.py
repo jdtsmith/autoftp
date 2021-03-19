@@ -3,4 +3,4 @@ class myOtherModule:
         self.other = other
 
     def report(self):
-        print('** Other:',self.other)
+        print('** MyOtherModule:',self.other)
