@@ -1,5 +1,5 @@
 # autoftp Automatic Re-run Example
-<a href="https://youtu.be/Flkg_2ui7eU"><img src="https://img.youtube.com/vi/Flkg_2ui7eU/0.jpg" align="right" width=384></a>
+<a href="https://youtu.be/Flkg_2ui7eU"><img src="https://img.youtube.com/vi/Flkg_2ui7eU/maxresdefault.jpg" width=450 align="right"></a>
 
 This small example program shows how `autoftp` can be used to accomplish _auto re-running_ of a MicroPython project (click image at right to see it in action).  It includes a version of [`uftpd.py`](https://github.com/robert-hh/FTP-Server-for-ESP8266-ESP32-and-PYBD) which supports `exec`'ing code via `SITE` commands.  To try it, edit `.autoftp` with your MicroPython host name or IP address, `wifi.py` with your wifi details, and to get started, transfer all the files to the root directory of a clean MicroPython board (using `rshell`, for example).
 
