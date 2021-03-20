@@ -3,7 +3,7 @@
 # autoftp — Fast remote development over FTP  [![GitHub tag](https://img.shields.io/github/tag/jdtsmith/autoftp.svg)](https://GitHub.com/jdtsmith/autoftp/tags/)
 <a href="https://youtu.be/Flkg_2ui7eU"><img src="https://img.youtube.com/vi/Flkg_2ui7eU/maxresdefault.jpg" width=550 align="right"></a>
 
-Auto-send matching files over the network with FTP.  Watches for changes in files with matching names in the current directory and all subdirectories, quickly sending them by FTP to a remote server.  While this works with any files and remote FTP server, it is ideal for network-connected microcontroller development with interpreted frameworks like [MicroPython](http://micropython.org).  Matching files can optionally be processed with a script and, with server support, remote commands can be run.
+Auto-send matching files over the network with FTP.  Watches for changes in files with matching names in the current directory and all subdirectories, quickly sending them by FTP to a remote server.  While this works with any files and remote FTP server, it is ideal for network-connected microcontroller development with interpreted frameworks like [MicroPython](http://micropython.org).  Matching files can optionally be processed with a script and, with server support, remote commands can be run, allowing you to auto-restart running modules, for example.
 
 Click the image to see `autoftp` in action.
 
@@ -134,7 +134,7 @@ with one option per line (omitting the leading dashes).  No quote marks are requ
    reload('%%f','main')
    ```
    This will configure `autoftp` to upload `.mpy` and `.inc` files to `esp32.local`, omitting anything in the `test/` directory.  It pre-processes `.py` files into `.mpy` files using `mpy-cross`, deleting these generated `.mpy` files after they are uploaded.  And for the file `main.mpy`, as well as all `.mpy` files under `lib/`, after upload, `autoftp` will run send a remote command reloading the relevant modules and the `main` module itself (see below for ideas on how to implement this).
-1. A complete example `remote-command` based auto-reloading of multiple modules can be found in [examples](https://github.com/jdtsmith/autoftp/tree/remote-command/example).
+1. A complete example `remote-command` based auto-reloading of multiple modules can be found in [example/](https://github.com/jdtsmith/autoftp/tree/master/example).
 
 ## Questions
 
@@ -187,7 +187,7 @@ Often, however, your main module imports other modules, so will _also_ need to b
 
 ### Auto re-running your project using `remote-command`
 
-If your FTP server supports `exec`ing code, you can automatically re-run the main program or module using `--remote-command`.  Find a complete simple example of how to do this is in the [`example/`](https://github.com/jdtsmith/autoftp/tree/remote-command/example) directory. Also see this directory for a suggested way to start wifi and the ftp server in a MicroPython context. 
+If your FTP server supports `exec`ing code, you can automatically re-run the main program or module using `--remote-command`.  Find a complete simple example of how to do this is in the [`example/`](https://github.com/jdtsmith/autoftp/tree/master/example) directory. Also see this directory for a suggested way to start wifi and the ftp server in a MicroPython context. 
 
 
 
