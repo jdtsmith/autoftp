@@ -214,7 +214,7 @@ Usage: autoftp host -d|--debug -n|--dry-run -p|--include=pats -x|--exclude=pats
   -k|--up-delete='pat,pat,..': delete files match any of the patterns, after
                               they have been successfully uploaded
   -r|--remote-command='command': command to execute on the remote (ftp) server 
-                              after each uploaded file. %f will be replaced by 
+                              after each uploaded file. %%f will be replaced by 
                               the file basename of the uploaded file
   -m|--remote-match='pat,pat': only execute --remote-command on uploaded
                               files which match one of these patterns
