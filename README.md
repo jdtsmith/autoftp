@@ -3,7 +3,9 @@
 # autoftp — Fast remote development over FTP  [![GitHub tag](https://img.shields.io/github/tag/jdtsmith/autoftp.svg)](https://GitHub.com/jdtsmith/autoftp/tags/)
 <a href="https://youtu.be/Flkg_2ui7eU"><img src="https://img.youtube.com/vi/Flkg_2ui7eU/maxresdefault.jpg" width=550 align="right"></a>
 
-Auto-send matching files over the network with FTP.  Watches for changes in files with matching names in the current directory and all subdirectories, quickly sending them by FTP to a remote server.  While this works with any files and remote FTP server, it is ideal for network-connected microcontroller development with interpreted frameworks like [MicroPython](http://micropython.org).  Matching files can optionally be processed with a script and, with server support, remote commands can be run, allowing you to auto-restart running modules, for example.
+autoftp: Auto-send matching files over the network using FTP.  
+
+autoftp watches for changes in files with matching names in the current directory and all subdirectories, quickly sending them by FTP to a remote server.  While this works with any files and remote FTP server, it is ideal for network-connected microcontroller development with interpreted frameworks like [MicroPython](http://micropython.org), where it is the fastest way to develop.  Matching files can optionally be pre-processed with a script and, with server support, remote commands can be run, allowing you to auto-restart running modules, for example.
 
 Click the image to see `autoftp` in action.
 
@@ -14,11 +16,11 @@ Click the image to see `autoftp` in action.
 % autoftp.py hostname
 ```
 
-Install the [`uftpd.py`](https://github.com/robert-hh/FTP-Server-for-ESP8266-ESP32-and-PYBD) micro-FTP server on your micro-controller, and set it up to run on boot (see below for tips).
+For devices running micropython: install the [`uftpd.py`](https://github.com/robert-hh/FTP-Server-for-ESP8266-ESP32-and-PYBD) micro-FTP server on your micro-controller, and set it up to run on boot (see [below](#micropython-application) for tips).
 
 Install the [`autoftp`](https://raw.githubusercontent.com/jdtsmith/autoftp/master/autoftp.py) file and run it like you normally run your Python3 scripts. 
 
-To use, just run in a directory like `autoftp host`.  `autoftp` will start monitoring for changes in any `.py` files (by default) in the local directory or below, sending the files via an actively maintained FTP session to `host` whenever they are created or modified, and creating any sub-directories as needed. 
+To use, just run in your project directory: `autoftp.py host`.  `autoftp` will start monitoring for changes in any `.py` files (by default) in the local directory and all subdirectories, sending the files via an actively maintained FTP session to `host` whenever they are created or modified, and creating any sub-directories on the remote host as needed.  See more [examples](#Examples) below. 
 
 ## Usage
 
@@ -58,7 +60,7 @@ Micro-controller development can be tedious.  With C-based firmware frameworks, 
 
 An edit/compile/build/upload "development loop" cycle well over one minute is not atypical. When using such methods, I often _forget what it was I was testing_ before an iteration completes.  Painful!
 
-[MicroPython](http://micropython.org) greatly simplifies this workflow.  It includes an interactive REPL for testing and development. Its _paste mode_ (`Ctrl-E`) makes it trivial to test small chunks of code.  But for typical projects, you'll often be editing and uploading relatively large Python files (say >5K).  In this case, the development loop can _still_ be a somewhat slow process:
+[MicroPython](http://micropython.org) greatly simplifies this workflow.  It includes an interactive REPL on the microcontroller for testing and development. Its _paste mode_ (`Ctrl-E`) makes it trivial to test small chunks of code.  But for typical projects, you'll often be editing and uploading relatively large Python files (>5Kb).  In this case, the development loop is faster than with compiled toolchain, but can _still_ be a somewhat slow process:
 
 1. Make a tiny change, perhaps to a single constant in some file
 1. Using a tool like [rshell](https://github.com/dhylands/rshell): `C-x` to exit the REPL, `cp file.py /board` to upload file over  serial port [up to ~15-20s for a large 25K file, at typical baud rates]
@@ -75,7 +77,7 @@ This can _still_ constitute a 10-30s "development loop" time, maybe more if you 
 
 ## Usage Details
 
-Only files are watched and uploaded.  All files _must_ match one of the `-p|--include` wildcard patterns (`*.py` by default), and _must not_ match any of the `-x|--exclude` exclude pattern(s).  The latter is a good way to omit entire directories, etc.  Be aware that files in the current directory are referred to with a leading `./`, e.g., `./file.py`, and that patterns match against the entire path name (directory included). By default, files are placed on the remote host in directories relative to the FTP server's working directory (typically the root of the microcontroller).
+Only files are watched and uploaded.  All files _must_ match one of the `-p|--include` wildcard patterns (`*.py` by default), and _must not_ match any of the `-x|--exclude` exclude pattern(s).  The latter is a good way to omit entire directories, etc.  Be aware that files in the current directory are referred to with a leading `./`, e.g., `./file.py`, and that patterns match against the entire path name (directory included). By default, files are placed on the remote host in directories relative to the remote FTP server's working directory (typically the root of the microcontroller).
 
 ### Pre-process files with scripts
 
@@ -95,9 +97,9 @@ N.B. If the files being created or modified by a `-s|--process` script are _also
 
 If your FTP server supports the `SITE` FTP command for sending custom commands to the server, you can specify a command to send after files are uploaded with `-r|--remote-command`.  If configured in the `.autoftp` config file (see below), the remote command can even be multi-line.  Note that newline characters are not permitted in FTP commands, so they are translated to null characters ('\0').  Your FTP server's `SITE` handlers would need to be able to translate these.  Recent versions of the [`uftpd.py`](https://github.com/robert-hh/FTP-Server-for-ESP8266-ESP32-and-PYBD) MicroPython FTP server include `SITE` support for `exec`'ing remote python statements.
 
-If `-r|--remote-match` patterns are specified, the `remote-command` will _only_ be run after uploading files which match these patterns.
+If `-m|--remote-match` patterns are specified, the `remote-command` will _only_ be run after uploading files which match these patterns.
 
-N.B.: The `SITE` command *must not block*, or the FTP server will likely stop functioning. In the context of `exec`'d MicroPython statements, these must return immediately (typically after setting a flag in the main module/object/etc. to signal a stop and reload).  See below for examples. 
+N.B.: The `SITE` command *must not block*, or the FTP server will likely stop functioning. In the context of `exec`'d MicroPython statements, they must return immediately (typically after setting a flag in the main module/object/etc. to signal a stop and reload).  See below for examples. 
 
 ### `.autoftp` Config File
 
