@@ -158,7 +158,7 @@ with one option per line (omitting the leading dashes).  No quote marks are requ
 
 ### Avoiding soft reset
 
-A simple way of "starting from scratch" is to soft-reset your MicroPython board with `Ctrl-D`.  This has the nice property of re-starting MicroPython with a clean slate without a full hardware boot.  But it also closes open sockets, including FTP.  While `autoftp` will re-connect if it finds the FTP link broken, this takes several seconds.  Sometimes this may be required, but a quicker way is to `re-run` your file after uploading it, for example using a simple "run" script (as defined in your `main.py`, for example), like:
+A simple way of "starting from scratch" is to soft-reset your MicroPython board with `Ctrl-D`.  This has the nice property of re-starting MicroPython with a clean slate without a full hardware boot.  But it also closes open sockets, including FTP.  While `autoftp` will re-connect if it finds the FTP link broken, this takes several seconds.  Sometimes this may be required, but a quicker way is to _re-run_ your file after uploading it, for example using a simple "run" script (as defined in your `main.py`, for example), like:
 
 ```python
 import sys
