@@ -77,7 +77,7 @@ This can _still_ constitute a 10-30s "development loop" time, maybe more if you 
 
 ## Usage Details
 
-Only files are watched and uploaded.  All files _must_ match one of the `-p|--include` wildcard patterns (`*.py` by default), and _must not_ match any of the `-x|--exclude` exclude pattern(s).  The latter is a good way to omit entire directories, etc.  Be aware that files in the current directory are referred to with a leading `./`, e.g., `./file.py`, and that patterns match against the entire path name (directory included). By default, files are placed on the remote host in directories relative to the remote FTP server's working directory (typically the root of the microcontroller).
+Only files are watched and uploaded.  All files _must_ match one of the `-p|--include` wildcard patterns (`*.py` by default), and _must not_ match any of the `-x|--exclude` exclude pattern(s).  The latter is a good way to omit entire directories, etc.  Be aware that files in the current directory are referred to with a leading path, and that patterns match against the entire path name (directory included). By default, files are placed on the remote host in directories relative to the remote FTP server's working directory (typically the root directory of the microcontroller).  
 
 ### Pre-process files with scripts
 
