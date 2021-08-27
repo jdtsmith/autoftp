@@ -48,7 +48,6 @@ def log(msg = None, error = False, dry_run = False, prefix = None, **kwds):
 def cur_time():
     l = time.localtime()
     return f"{_BRI}{l.tm_hour:02}:{l.tm_min:02}:{l.tm_sec:02}{_RST}"
-
         
 class FTPWatcher(PatternMatchingEventHandler):
     def __init__(self, config, **kwargs):
@@ -119,6 +118,8 @@ class FTPWatcher(PatternMatchingEventHandler):
         
     def handle(self,path):
         if not os.path.isfile(path): return # Ignore phantom modified on delete
+        path = os.path.relpath(path)
+        
         log(prefix=f">> {cur_time()} Processing {_BRI}{path}{_RST}...")
         ppath = Path(path)
 
