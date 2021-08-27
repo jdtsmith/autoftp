@@ -113,7 +113,7 @@ class FTPWatcher(PatternMatchingEventHandler):
     def on_created(self, event):
         self.handle(event.src_path)
 
-    def on_modified(self,event):
+    def on_modified(self, event):
         self.handle(event.src_path)
         
     def handle(self,path):
