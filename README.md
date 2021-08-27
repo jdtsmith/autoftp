@@ -127,10 +127,10 @@ with one option per line (omitting the leading dashes).  **Do not include string
    ```
    host: esp32.local
    include: *.mpy, *.inc
-   exclude: *test/*
+   exclude: test/*
    process: *.py, mpy-cross
    up-delete: *.mpy
-   remote-match: *main.mpy, *lib/*.mpy
+   remote-match: *main.mpy, lib/*.mpy
    remote-command: 
    print("Reloading Main:")
    reload('%%f','main')
