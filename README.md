@@ -135,7 +135,7 @@ with one option per line (omitting the leading dashes).  No quote marks are requ
    print("Reloading Main:")
    reload('%%f','main')
    ```
-   This will configure `autoftp` to upload `.mpy` and `.inc` files to `esp32.local`, omitting anything in the `test/` directory.  It pre-processes `.py` files into `.mpy` files using `mpy-cross`, deleting these generated `.mpy` files after they are uploaded.  And for the file `main.mpy`, as well as all `.mpy` files under `lib/`, after upload, `autoftp` will run send a remote command reloading the relevant modules and the `main` module itself (see below for ideas on how to implement this).
+   This will configure `autoftp` to upload `.mpy` and `.inc` files to `esp32.local`, omitting anything in the `test/` directory.  It pre-processes `.py` files into `.mpy` files using `mpy-cross`, deleting these generated `.mpy` files after they are uploaded.  And for the file `main.mpy`, as well as all `.mpy` files under `lib/`, after upload, `autoftp` will send a remote command which _reloads_ the relevant modules together with the `main` module itself (see below for ideas on how to implement this).
 1. A complete example `remote-command` based auto-reloading of multiple modules can be found in [example/](https://github.com/jdtsmith/autoftp/tree/master/example).
 
 ## Questions
