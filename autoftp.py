@@ -18,7 +18,7 @@ colorama.init()
 _BRI = colorama.Style.BRIGHT
 _RST = colorama.Style.RESET_ALL
 _GREEN = colorama.Fore.GREEN
-__VERSION__='v0.2'
+__VERSION__='v0.2.1'
 
 def path_matches(path,patterns, key = None):
     if patterns:
