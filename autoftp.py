@@ -54,7 +54,7 @@ class FTPWatcher(PatternMatchingEventHandler):
         patterns = config["include"] or []
         if config["process"]:
             patterns.extend(x['pattern'] for x in config["process"])
-        super().__init__(patterns = patterns, **kwargs)
+        super().__init__(patterns = patterns, ignore_patterns = config["exclude"], **kwargs)
         self.host = config["host"]
         self.config = config
         self.ftp_start()
