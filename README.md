@@ -111,7 +111,7 @@ long-option-name
 long-option-with-value-name: value
 ```
 
-with one option per line (omitting the leading dashes).  No quote marks are required in the values.  Options passed via the command line override & extend file-based options.
+with one option per line (omitting the leading dashes).  **Do not include string quote marks around values.**  Options passed via the command line override & extend file-based options.
 
 ### Examples
 
